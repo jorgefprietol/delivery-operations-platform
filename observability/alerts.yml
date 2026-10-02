@@ -1,0 +1,24 @@
+groups:
+  - name: delivery-operations
+    rules:
+      - alert: DeliveryAPIUnavailable
+        expr: up{job="delivery-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Delivery API cannot be scraped
+      - alert: DeliveryHTTPErrorBudgetBurn
+        expr: sum(rate(delivery_http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(delivery_http_requests_total[5m])), 0.001) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than 1% of measured requests return server errors
+      - alert: DeliveryIncidentUnresolved
+        expr: delivery_open_incidents_30d > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: A recorded production delivery needs recovery

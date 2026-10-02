@@ -1,0 +1,74 @@
+name: delivery-operations
+services:
+  api:
+    image: ${APP_IMAGE:-delivery-operations-platform:local}
+    build:
+      context: .
+      args:
+        SOURCE_REVISION: ${SOURCE_REVISION:-development}
+    environment:
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:?Generate .env with scripts/init-env.py}
+      APPROVER_TOKEN: ${APPROVER_TOKEN:?Generate .env with scripts/init-env.py}
+    ports:
+      - "127.0.0.1:${API_PORT:-18095}:8080"
+    volumes:
+      - delivery-data:/data
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1
+  prometheus:
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=7d"]
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-19095}:9090"
+    depends_on:
+      api: {condition: service_healthy}
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+  grafana:
+    image: grafana/grafana:13.2.1@sha256:f772d434e8fab0049deb2b1b30abd43342bcfca1537614aa8d36080232cf4283
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Generate .env with scripts/init-env.py}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-13095}:3000"
+    depends_on:
+      prometheus: {condition: service_healthy}
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+volumes:
+  delivery-data:
+  prometheus-data:
+  grafana-data:

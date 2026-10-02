@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Delivery Operations Platform</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <aside>
+      <a class="brand" href="/">D<span>OP</span></a>
+      <p class="label">ENGINEERING SYSTEMS</p>
+      <nav>
+        <a class="selected" href="#overview">◈ &nbsp; Delivery overview</a
+        ><a href="#releases">↗ &nbsp; Release history</a
+        ><a href="/openapi.json">⌘ &nbsp; API contract</a>
+      </nav>
+      <div class="aside-bottom">
+        <span class="dot"></span> Delivery control plane<br /><small
+          >Immutable artifacts · Auditable operations</small
+        >
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">PLATFORM ENGINEERING / OPERATIONS</p>
+          <h1>Delivery overview<span class="live">LIVE</span></h1>
+          <p class="subtitle">
+            Visibilidad y control sobre cada entrega de software.
+          </p>
+        </div>
+        <div class="period">Ventana móvil <strong>30 días</strong></div>
+      </header>
+      <section class="connect">
+        <div>
+          <strong>Conectar sesión</strong>
+          <p>
+            Introduce tu token de operador o aprobador. Se utiliza solamente en
+            memoria durante esta sesión.
+          </p>
+        </div>
+        <form id="session">
+          <label class="sr-only" for="token">Token de acceso</label
+          ><input
+            id="token"
+            type="password"
+            placeholder="Bearer token"
+            autocomplete="off"
+            required
+            minlength="32"
+          /><button>Conectar →</button>
+        </form>
+      </section>
+      <p id="notice" role="status">
+        Conecta una sesión para consultar los datos operativos.
+      </p>
+      <section id="overview" class="metrics">
+        <article>
+          <p>DEPLOYMENTS</p>
+          <strong id="deployments">—</strong
+          ><small>Entregas a producción</small>
+        </article>
+        <article>
+          <p>CHANGE FAILURE RATE</p>
+          <strong id="failure">—</strong
+          ><small>Entregas con fallo registrado</small>
+        </article>
+        <article>
+          <p>LEAD TIME</p>
+          <strong id="lead">—</strong><small>Commit → entrega · media</small>
+        </article>
+        <article>
+          <p>RECOVERY TIME</p>
+          <strong id="recovery">—</strong
+          ><small>Fallo → recuperación · media</small>
+        </article>
+      </section>
+      <section class="columns">
+        <article class="panel">
+          <div class="section-head">
+            <h2>Entornos activos</h2>
+            <span>Estado persistido</span>
+          </div>
+          <div id="environments" class="empty">Sin datos consultados</div>
+        </article>
+        <article class="panel">
+          <div class="section-head">
+            <h2>Control de entrega</h2>
+            <span>Quality gates</span>
+          </div>
+          <ol class="steps">
+            <li>
+              <b>01</b>
+              <div>
+                <strong>Registrar evidencia</strong
+                ><small>Commit, digest y pipeline de validación</small>
+              </div>
+            </li>
+            <li>
+              <b>02</b>
+              <div>
+                <strong>Aprobar promoción</strong
+                ><small>Credencial independiente y versión esperada</small>
+              </div>
+            </li>
+            <li>
+              <b>03</b>
+              <div>
+                <strong>Confirmar resultado</strong
+                ><small>Entrega, fallo y recuperación trazables</small>
+              </div>
+            </li>
+          </ol>
+        </article>
+      </section>
+      <section id="releases" class="panel history">
+        <div class="section-head">
+          <h2>Historial de releases</h2>
+          <button id="refresh" class="secondary" disabled>Actualizar ↻</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>RELEASE / COMMIT</th>
+                <th>ENTORNO</th>
+                <th>ESTADO</th>
+                <th>ARTEFACTO</th>
+                <th>REGISTRO</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr>
+                <td colspan="5" class="empty">
+                  Conecta una sesión para ver el historial.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <footer>
+        Delivery Operations Platform
+        <span
+          >Las métricas se calculan sobre registros de producción. Sin datos se
+          muestra —.</span
+        >
+      </footer>
+    </main>
+  </body>
+</html>
