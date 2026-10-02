@@ -36,6 +36,7 @@ jobs:
         run: |
           python -m ruff check .
           python -m ruff format --check .
+          node --check delivery/static/app.js
       - name: Test governance, concurrency, recovery and persistence
         run: python -m pytest
       - name: Check reproducible monitoring assets

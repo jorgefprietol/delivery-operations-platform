@@ -14,3 +14,7 @@ El workflow [CI and Delivery](https://github.com/jorgefprietol/delivery-operatio
 - Publicación de la misma imagen que pasó integración, con procedencia verificable por OIDC.
 
 Las métricas de los escenarios de verificación usan datos sintéticos. El porcentaje de cobertura y el número de pruebas se obtienen de los reportes, no se fijan como resultados antes de ejecutarlos. Las verificaciones externas y el despliegue Terraform deben registrarse con su ejecución concreta.
+
+## Verificación local — 2 de octubre de 2026
+
+Python 3.12.15 en Windows: 28 pruebas aprobadas, 99,21% de cobertura de aplicación, lint y formato sin errores. Auditoría de dependencias sin vulnerabilidades conocidas; escaneo de secretos sin hallazgos; actionlint sin errores; promtool confirma tres reglas válidas. Los reportes generados permanecen fuera del repositorio y se reproducen mediante los comandos documentados.
