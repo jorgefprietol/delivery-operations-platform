@@ -9,6 +9,9 @@ services:
     environment:
       OPERATOR_TOKEN: ${OPERATOR_TOKEN:?Generate .env with scripts/init-env.py}
       APPROVER_TOKEN: ${APPROVER_TOKEN:?Generate .env with scripts/init-env.py}
+      EVIDENCE_MODE: ${EVIDENCE_MODE:-verified}
+      EVIDENCE_REPOSITORY: ${EVIDENCE_REPOSITORY:-jorgefprietol/delivery-operations-platform}
+      EVIDENCE_GITHUB_TOKEN: ${EVIDENCE_GITHUB_TOKEN:-}
     ports:
       - "127.0.0.1:${API_PORT:-18095}:8080"
     volumes:

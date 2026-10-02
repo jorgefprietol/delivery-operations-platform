@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -30,7 +31,7 @@ class Store:
                     committed_at TEXT NOT NULL, evidence_url TEXT NOT NULL,
                     status TEXT NOT NULL DEFAULT 'candidate', version INTEGER NOT NULL DEFAULT 1,
                     created_at TEXT NOT NULL, approved_at TEXT, deployed_at TEXT,
-                    failed_at TEXT, recovered_at TEXT, previous_id TEXT,
+                    failed_at TEXT, recovered_at TEXT, previous_id TEXT, verified_evidence TEXT,
                     UNIQUE(environment, image_digest)
                 );
                 CREATE TABLE IF NOT EXISTS active (
@@ -41,6 +42,10 @@ class Store:
                     action TEXT NOT NULL, actor TEXT NOT NULL, timestamp TEXT NOT NULL
                 );
             """)
+            columns = {row["name"] for row in db.execute("PRAGMA table_info(releases)")}
+            if "verified_evidence" not in columns:
+                db.execute("ALTER TABLE releases ADD COLUMN verified_evidence TEXT")
+                db.commit()
 
     @contextmanager
     def connect(self):
@@ -121,7 +126,7 @@ class Store:
                 )
             ]
 
-    def transition(self, release_id, action, version, actor):
+    def transition(self, release_id, action, version, actor, evidence=None):
         timestamp = now()
         with self.transaction() as db:
             item = self.row(db, release_id)
@@ -144,9 +149,10 @@ class Store:
                 raise Conflict("Only the active release can fail or roll back")
             if action == "approve":
                 db.execute(
-                    "UPDATE releases SET status='approved', approved_at=?, version=version+1 "
+                    "UPDATE releases SET status='approved', approved_at=?, verified_evidence=?, "
+                    "version=version+1 "
                     "WHERE id=?",
-                    (timestamp, release_id),
+                    (timestamp, json.dumps(evidence), release_id),
                 )
             elif action == "deploy":
                 previous_id = active["release_id"] if active else None

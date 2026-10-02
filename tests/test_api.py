@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from delivery.api import Candidate, create_app
+from delivery.evidence import DemoVerifier
 from delivery.store import Conflict
 
 OPERATOR, APPROVER = "o" * 40, "a" * 40
@@ -15,7 +16,7 @@ AP = {"Authorization": "Bearer " + APPROVER}
 
 @pytest.fixture
 def app(tmp_path):
-    return create_app(tmp_path / "delivery.db", OPERATOR, APPROVER)
+    return create_app(tmp_path / "delivery.db", OPERATOR, APPROVER, DemoVerifier())
 
 
 @pytest.fixture
@@ -200,7 +201,7 @@ def test_not_found_and_static_assets(client):
 
 def test_persistence_after_restart(client, app, tmp_path):
     release = deploy(client)
-    other = create_app(tmp_path / "delivery.db", OPERATOR, APPROVER)
+    other = create_app(tmp_path / "delivery.db", OPERATOR, APPROVER, DemoVerifier())
     with TestClient(other) as restarted:
         assert restarted.get(f"/api/v1/releases/{release['id']}", headers=OP).json() == release
 

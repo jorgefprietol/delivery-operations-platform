@@ -1,0 +1,47 @@
+name: Verify published release evidence
+on:
+  workflow_run:
+    workflows: [CI and Delivery]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+
+jobs:
+  verify:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EVIDENCE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - name: Install locked verification dependencies
+        run: python -m pip install --require-hashes -r requirements-dev.lock
+      - name: Verify real signed evidence through the approval API
+        run: |
+          image="ghcr.io/$GITHUB_REPOSITORY:sha-$SOURCE_SHA"
+          docker pull "$image"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$image" | cut -d@ -f2)
+          python -m scripts.verify_real_evidence --run-id "$RUN_ID" --commit "$SOURCE_SHA" --digest "$digest"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-release-evidence
+          path: artifacts/verified-evidence.json
+          retention-days: 14

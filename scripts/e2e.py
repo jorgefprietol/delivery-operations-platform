@@ -29,7 +29,9 @@ def check(response, expected):
 with httpx.Client(base_url=args.base_url, timeout=15) as client:
     operator = {"Authorization": f"Bearer {os.environ['OPERATOR_TOKEN']}"}
     approver = {"Authorization": f"Bearer {os.environ['APPROVER_TOKEN']}"}
-    check(client.get("/health/ready"), 200)
+    health = check(client.get("/health/ready"), 200)
+    if health.get("evidence_mode") != "demo":
+        raise RuntimeError("Synthetic E2E requires explicit EVIDENCE_MODE=demo")
     check(client.get("/api/v1/releases"), 401)
     created = []
     for _ in range(2):

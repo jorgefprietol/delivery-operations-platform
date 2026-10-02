@@ -86,6 +86,7 @@ jobs:
     env:
       APP_IMAGE: delivery-operations-platform:ci
       SOURCE_REVISION: ${{ github.sha }}
+      EVIDENCE_MODE: demo
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

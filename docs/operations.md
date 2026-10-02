@@ -2,6 +2,10 @@
 
 ## Diagnóstico
 
+El modo normal es `EVIDENCE_MODE=verified`. Para E2E sintético, generar un entorno nuevo con `python scripts/init-env.py --demo`, o cambiar explícitamente esa variable a `demo` en el `.env` existente y recrear la API. Volver a `verified` al terminar la demostración. El panel indica el modo y los recibos diferencian evidencia real de sintética.
+
+La verificación necesita acceso HTTPS a GitHub y los servicios de confianza Sigstore. Para repositorios públicos puede operar sin credencial GitHub, sujeto a límites de API. Si se requiere, configurar `EVIDENCE_GITHUB_TOKEN` con acceso de solo lectura a Actions y attestations del repositorio; mantenerlo exclusivamente en `.env`. Un fallo bloquea la aprobación y conserva el candidato. El repositorio de confianza se configura mediante `EVIDENCE_REPOSITORY`; el workflow permitido es `.github/workflows/ci.yml` en `main`.
+
 ```powershell
 docker compose ps
 docker compose logs --tail 100 api

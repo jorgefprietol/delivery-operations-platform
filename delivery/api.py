@@ -15,6 +15,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from prometheus_client import CollectorRegistry, Counter, Histogram, generate_latest
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
+from delivery.evidence import (
+    DEFAULT_REPOSITORY,
+    DemoVerifier,
+    EvidenceRejected,
+    EvidenceUnavailable,
+    GitHubVerifier,
+)
 from delivery.store import Conflict, NotFound, Store
 
 logger = logging.getLogger("delivery")
@@ -56,9 +63,17 @@ class Transition(BaseModel):
     expected_version: int = Field(ge=1)
 
 
-def create_app(db_path=None, operator_token=None, approver_token=None):
+def create_app(db_path=None, operator_token=None, approver_token=None, evidence_verifier=None):
     operator = operator_token or os.getenv("OPERATOR_TOKEN", "")
     approver = approver_token or os.getenv("APPROVER_TOKEN", "")
+    mode = os.getenv("EVIDENCE_MODE", "verified")
+    if mode not in {"verified", "demo"}:
+        raise ValueError("EVIDENCE_MODE must be verified or demo")
+    verifier = evidence_verifier or (
+        DemoVerifier()
+        if mode == "demo"
+        else GitHubVerifier(os.getenv("EVIDENCE_REPOSITORY", DEFAULT_REPOSITORY))
+    )
 
     @asynccontextmanager
     async def lifespan(app):
@@ -110,6 +125,14 @@ def create_app(db_path=None, operator_token=None, approver_token=None):
     async def missing_handler(request, error):
         return JSONResponse(status_code=404, content={"detail": str(error)})
 
+    @app.exception_handler(EvidenceRejected)
+    async def evidence_rejected(request, error):
+        return JSONResponse(status_code=412, content={"detail": str(error)})
+
+    @app.exception_handler(EvidenceUnavailable)
+    async def evidence_unavailable(request, error):
+        return JSONResponse(status_code=503, content={"detail": str(error)})
+
     @app.middleware("http")
     async def observe(request: Request, call_next):
         request_id, start = str(uuid4()), time.perf_counter()
@@ -155,7 +178,11 @@ def create_app(db_path=None, operator_token=None, approver_token=None):
                 db.execute("SELECT 1 FROM releases LIMIT 1")
         except Exception as error:
             raise HTTPException(503, "Database unavailable") from error
-        return {"status": "ready", "revision": os.getenv("SOURCE_REVISION", "development")}
+        return {
+            "status": "ready",
+            "revision": os.getenv("SOURCE_REVISION", "development"),
+            "evidence_mode": verifier.mode,
+        }
 
     @app.get("/api/v1/releases", dependencies=[Depends(role)])
     def releases(limit: Annotated[int, Query(ge=1, le=200)] = 50):
@@ -177,7 +204,11 @@ def create_app(db_path=None, operator_token=None, approver_token=None):
     def approve(
         release_id: str, payload: Transition, actor: Annotated[str, Depends(require_approver)]
     ):
-        return store.transition(release_id, "approve", payload.expected_version, actor)
+        item = store.get(release_id)
+        if item["status"] != "candidate" or item["version"] != payload.expected_version:
+            raise Conflict("Approval requires a candidate and its current version")
+        evidence = verifier.verify(item)
+        return store.transition(release_id, "approve", payload.expected_version, actor, evidence)
 
     @app.post("/api/v1/releases/{release_id}/{action}")
     def transition(
@@ -186,6 +217,17 @@ def create_app(db_path=None, operator_token=None, approver_token=None):
         payload: Transition,
         actor: Annotated[str, Depends(require_operator)],
     ):
+        if action == "deploy" and verifier.mode == "verified":
+            item = store.get(release_id)
+            receipt = json.loads(item["verified_evidence"] or "null")
+            if not (
+                isinstance(receipt, dict)
+                and receipt.get("verified") is True
+                and receipt.get("mode") == "verified"
+                and receipt.get("commit_sha") == item["commit_sha"]
+                and receipt.get("image_digest") == item["image_digest"]
+            ):
+                raise EvidenceRejected("Verified approval required; demo receipts cannot promote")
         return store.transition(release_id, action, payload.expected_version, actor)
 
     @app.get("/api/v1/summary", dependencies=[Depends(role)])
@@ -222,4 +264,5 @@ def create_app(db_path=None, operator_token=None, approver_token=None):
         return FileResponse(Path(__file__).parent / "static" / filename)
 
     app.state.store = store
+    app.state.evidence_verifier = verifier
     return app

@@ -4,7 +4,7 @@
 
 Autor: Jorge Prieto
 
-Diseñé e implementé una plataforma de operaciones de entrega con una API transaccional, separación de roles, aprobación de promociones, control de concurrencia y recuperación de releases. Construí un pipeline de GitHub Actions con pruebas en Linux y Windows, validación de infraestructura, escaneo de seguridad, verificación de contenedores y publicación del artefacto probado en GHCR con procedencia OIDC.
+Diseñé e implementé una plataforma de operaciones de entrega con una API transaccional, separación de roles, aprobación de promociones, control de concurrencia y recuperación de releases. Implementé verificación de ejecuciones GitHub Actions y procedencia firmada con Sigstore antes de aprobar artefactos. Construí un pipeline con pruebas en Linux y Windows, validación de infraestructura, escaneo de seguridad, verificación de contenedores y publicación del artefacto probado en GHCR con procedencia OIDC.
 
 Automaticé la infraestructura local con Docker Compose y Terraform e integré Prometheus y Grafana para observar el servicio y analizar frecuencia de entregas, fallos, lead time y recuperación desde registros persistentes.
 

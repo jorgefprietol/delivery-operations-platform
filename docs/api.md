@@ -14,7 +14,7 @@
 | POST | `/api/v1/releases/{id}/rollback` | Operador; failed → rolled_back |
 | GET | `/api/v1/summary?days=30` | Ambos roles; ventana de 1 a 90 días |
 
-Errores: 401 sin credencial válida, 403 rol incorrecto, 404 release inexistente, 409 transición ilegal/digest duplicado/versión obsoleta, 422 contrato inválido. Los registros aceptan únicamente SHA completo y digest SHA-256, timestamp con zona horaria no futuro, URL HTTPS de GitHub Actions y los tres gates declarados como verdaderos.
+Errores: 401 sin credencial válida, 403 rol incorrecto, 404 release inexistente, 409 transición ilegal/digest duplicado/versión obsoleta, 412 evidencia no elegible o firma no verificable, 422 contrato inválido y 503 GitHub no disponible. Los registros aceptan únicamente SHA completo y digest SHA-256, timestamp con zona horaria no futuro, URL HTTPS de GitHub Actions y los tres gates declarados como verdaderos. En modo `verified`, esos campos se contrastan con GitHub y la procedencia firmada antes de aprobar.
 
 Ejemplo PowerShell, usando una imagen y evidencia verificadas previamente:
 

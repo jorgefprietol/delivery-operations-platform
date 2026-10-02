@@ -33,10 +33,15 @@ async function refresh() {
   $("notice").className = "";
   $("notice").textContent = "Consultando registros…";
   try {
-    const [summary, releases] = await Promise.all([
+    const [summary, releases, health] = await Promise.all([
       read("/api/v1/summary"),
       read("/api/v1/releases"),
+      read("/health/ready"),
     ]);
+    $("evidence-mode").textContent =
+      { demo: "DEMO · SINTÉTICO", verified: "MODO VERIFICADO" }[
+        health.evidence_mode
+      ] ?? "SIN CONSULTAR";
     $("deployments").textContent = summary.production_deployments;
     $("failure").textContent =
       summary.change_failure_rate == null
@@ -97,6 +102,7 @@ async function refresh() {
     $("notice").className = "error";
     $("notice").textContent = error.message;
     // Clear stale data so an expired session never presents old values as live.
+    $("evidence-mode").textContent = "SIN CONSULTAR";
     for (const id of ["deployments", "failure", "lead", "recovery"])
       $(id).textContent = "—";
     $("environments").replaceChildren(

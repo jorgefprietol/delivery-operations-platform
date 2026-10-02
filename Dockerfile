@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.title="Delivery Operations Platform" \
       org.opencontainers.image.source="https://github.com/jorgefprietol/delivery-operations-platform" \
       org.opencontainers.image.revision=$SOURCE_REVISION \
       org.opencontainers.image.licenses="MIT"
-ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 SOURCE_REVISION=$SOURCE_REVISION DATABASE_PATH=/data/delivery.db
+ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 SOURCE_REVISION=$SOURCE_REVISION DATABASE_PATH=/data/delivery.db XDG_CACHE_HOME=/tmp/cache XDG_DATA_HOME=/tmp/data
 RUN groupadd --gid 10001 delivery && useradd --uid 10001 --gid 10001 --no-create-home delivery && mkdir /data && chown delivery:delivery /data
 COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
