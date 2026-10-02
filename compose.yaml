@@ -72,3 +72,8 @@ volumes:
   delivery-data:
   prometheus-data:
   grafana-data:
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${DELIVERY_SUBNET:-10.240.95.0/24}

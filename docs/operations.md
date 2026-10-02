@@ -10,6 +10,8 @@ Invoke-RestMethod http://127.0.0.1:18095/health/ready
 
 En Grafana: entrar con `admin` y `GRAFANA_PASSWORD`, abrir **Platform Engineering → Delivery Operations | Engineering Overview**. Los datos del panel web se consultan manualmente al conectar o actualizar. Las series de Grafana se refrescan cada diez segundos.
 
+Compose utiliza una red independiente `10.240.95.0/24`, configurable mediante `DELIVERY_SUBNET` en `.env`. Si ese rango coincide con una red de tu entorno, elegir uno libre antes de iniciar; no es necesario eliminar redes de otros proyectos.
+
 ## Recuperación de registros
 
 Ante un fallo confirmado por el integrador, registrar `fail` sobre el release activo usando su versión actual. Ejecutar la restauración real de su imagen predecesora, comprobar su salud y luego registrar `rollback`. La API mueve el puntero activo y registra la recuperación en una sola transacción. Si no hay predecesor saludable, ejecutar y registrar una nueva entrega aprobada.
@@ -39,7 +41,7 @@ Crear primero `artifacts/` si no existe. Para restaurar, detener la API, colocar
 cd infra
 terraform init -lockfile=readonly
 # Docker Desktop en Windows:
-$env:DOCKER_HOST = 'npipe:////./pipe/docker_engine'
+$env:DOCKER_HOST = docker context inspect desktop-linux --format '{{.Endpoints.docker.Host}}'
 $env:TF_VAR_image = 'ghcr.io/jorgefprietol/delivery-operations-platform@sha256:<digest-verificado>'
 $env:TF_VAR_operator_token = '<token independiente de 32+ caracteres>'
 $env:TF_VAR_approver_token = '<token independiente de 32+ caracteres>'
